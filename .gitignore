@@ -1,0 +1,9 @@
+*/migrations/0*.py
+__pycache__/
+.vscode/
+*.sqlite3
+*.log
+*.pot
+*.pyc
+.env
+.DS_Store

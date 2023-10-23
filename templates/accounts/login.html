@@ -1,0 +1,41 @@
+{% extends "accounts/base.html" %}
+{% block title %}Login - GeoJSON Map Editor{% endblock %}
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12 d-flex align-items-center justify-content-center">
+        <!-- Wrap the card structure -->
+        <div class="card">
+          <div class="card-body">
+            <h2 class="card-title">Login</h2>
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger">{{ form.email.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+                {% if form.password.errors %}<div class="text-danger">{{ form.password.errors.0 }}</div>{% endif %}
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+            <p class="text-center mt-3">
+              <a href="#">Forgot Password?</a>
+            </p>
+            <p class="text-center">
+              Don't have an account?
+              <a href="{% url 'accounts:register' %}">Register</a>
+            </p>
+            {% for error in form.non_field_errors %}<div class="error-login">{{ error }}</div>{% endfor %}
+            {% if messages %}
+              {% for message in messages %}<h6 class="error-login">{{ message }}</h6>{% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}{% endblock %}
+    </title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <style>
+      #map {
+        height: 85vh;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <h1>GeoJSON Map Editor</h1>
+      <ul>
+        <li>
+          <a href="{% url 'accounts:home' %}">Home</a>
+        </li>
+        <li>
+          <a href="{% url 'maps:import_geojson' %}">Import GeoJSON</a>
+        </li>
+        <li>
+          <a href="{% url 'maps:map_display' %}">View Map</a>
+        </li>
+      </ul>
+    </div>
+    <div class="main-content">
+      <header>
+        <h4>Welcome {{ request.user.first_name }}</h4>
+        <a href="{% url 'accounts:logout' %}" class="logout-link">Logout</a>
+      </header>
+      <main>
+        {% block content %}{% endblock %}
+      </main>
+      <footer>
+        <p>&copy; {{ year }} GeoJSON Map Editor</p>
+      </footer>
+    </body>
+  </html>

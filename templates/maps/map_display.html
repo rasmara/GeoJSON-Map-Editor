@@ -1,0 +1,188 @@
+<!-- map_display.html -->
+{% extends 'maps/base.html' %}
+{% block title %}View Map - GeoJSON Map Editor{% endblock %}
+{% block content %}
+  <div id="map"></div>
+  <script type="text/javascript">
+  function initMap() {
+    const myLatLng = { lat: 0, lng: 0 };
+    const map = new google.maps.Map(document.getElementById("map"), {
+      zoom: 3,
+      center: myLatLng,
+    });
+
+    const get_url = "{% url 'maps:load_geojson' %}";
+    const post_url = "{% url 'maps:update_properties' %}";
+
+    fetch(get_url)
+      .then((response) => response.json())
+      .then((geojsonData) => {
+        map.data.addGeoJson(geojsonData);
+
+        let currentInfoWindow = null;
+
+        // Event listener for clicking on a polygon
+        map.data.addListener("click", function (event) {
+          if (currentInfoWindow) {
+            currentInfoWindow.close();
+          }
+          const feature = event.feature;
+          const properties = feature.h || {};
+
+          // Function to generate HTML for properties
+          function generatePropertiesHTML(properties) {
+            let html = "";
+            for (const key in properties) {
+              if (
+                key !== "uuid" &&
+                key !== "infoTitle" &&
+                properties.hasOwnProperty(key)
+              ) {
+                html += `
+                    <div class="property-row">
+                      <input type="text" class="property-key" value="${key}" placeholder="Key">
+                      <input type="text" class="property-value" value="${properties[key]}" placeholder="Value">
+                      <button class="delete-row">Delete</button>
+                    </div>
+                  `;
+              }
+            }
+            return html;
+          }
+
+          // Initial HTML for the info window
+          const title = feature.h.infoTitle;
+          const initialHTML = `
+              <h3>${title}</h3>
+              <div id="properties-container">
+                ${generatePropertiesHTML(properties)}
+              </div>
+              <button id="add-row">Add Row</button>
+              <button id="save-properties">Save</button>
+            `;
+
+          const infoWindow = new google.maps.InfoWindow({
+            content: initialHTML,
+          });
+
+          infoWindow.setPosition(event.latLng);
+          infoWindow.open(map);
+
+          // Function to add a new row for key-value pair
+          function addRow() {
+            const propertiesContainer = document.getElementById(
+              "properties-container"
+            );
+            const newRow = document.createElement("div");
+            newRow.className = "property-row";
+            newRow.innerHTML = `
+                <input type="text" class="property-key" placeholder="Key">
+                <input type="text" class="property-value" placeholder="Value">
+                <button class="delete-row">Delete</button>
+              `;
+            propertiesContainer.appendChild(newRow);
+          }
+
+          infoWindow.addListener("domready", function () {
+            // Add Row button click event
+            document
+              .getElementById("add-row")
+              .addEventListener("click", addRow);
+
+            // get csrf token from cookie
+            function getCookie(name) {
+              let cookieValue = null;
+              if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  // Check if this cookie name is the CSRF token name
+                  if (cookie.substring(0, name.length + 1) === name + "=") {
+                    cookieValue = decodeURIComponent(
+                      cookie.substring(name.length + 1)
+                    );
+                    break;
+                  }
+                }
+              }
+              return cookieValue;
+            }
+
+            // Save button click event
+            document
+              .getElementById("save-properties")
+              .addEventListener("click", function () {
+                const propertyRows = document.querySelectorAll(".property-row");
+                const updatedProperties = {};
+
+                propertyRows.forEach((row) => {
+                  const keyField = row.querySelector(".property-key");
+                  const valueField = row.querySelector(".property-value");
+                  const key = keyField.value;
+                  const value = valueField.value;
+                  if (key) {
+                    updatedProperties[key] = value;
+                  }
+                });
+
+                const csrfToken = getCookie("csrftoken");
+
+                const polygonId = properties.uuid;
+
+                // AJAX request for updating data
+                fetch(post_url, {
+                  method: "POST",
+                  body: JSON.stringify({
+                    id: polygonId,
+                    updated_data: updatedProperties,
+                  }),
+                  headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                  },
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    console.log(data);
+                    for (const key in feature.h) {
+                      feature.removeProperty(key);
+                    }
+
+                    // Set the new properties received from the server response
+                    for (const key in data.properties) {
+                      feature.setProperty(key, data.properties[key]);
+                    }
+
+                    infoWindow.close();
+                  })
+                  .catch((error) => {
+                    console.error("Error:", error);
+                  });
+              });
+
+            // Delete Row buttons click event
+            const deleteButtons = document.querySelectorAll(".delete-row");
+            deleteButtons.forEach((button) => {
+              button.addEventListener("click", function () {
+                this.parentNode.remove();
+              });
+            });
+          });
+          currentInfoWindow = infoWindow;
+        });
+        map.addListener("click", function () {
+          if (currentInfoWindow) {
+            currentInfoWindow.close();
+            currentInfoWindow = null; // Reset the current info window
+          }
+        });
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  window.initMap = initMap;
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap"></script>
+{% endblock %}

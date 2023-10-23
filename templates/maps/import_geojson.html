@@ -1,0 +1,11 @@
+{% extends 'maps/base.html' %}
+{% block title %}
+  Import JSON - GeoJSON Map
+  Editor
+{% endblock %}
+{% block content %}
+  <form method="post">
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit">Import GeoJSON</button>
+  </form>
+{% endblock %}
