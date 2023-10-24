@@ -68,6 +68,10 @@ def map_display(request):
 
 @login_required
 def load_geojson(request):
+    """
+    Once GeoJSON data is validated and stored; data for corresponding user will be
+    retrieved from this API as an AJAX call.
+    """
     user = request.user
 
     try:
@@ -102,6 +106,9 @@ def load_geojson(request):
 
 @login_required
 def update_properties(request):
+    """
+    To update the properties for a specific existing polygon; AJAX request from user.
+    """
     if request.method == "POST":
         try:
             post_data = json.loads(request.body)
@@ -140,6 +147,10 @@ def update_properties(request):
 
 
 def validate_data(data):
+    """
+    Custom validation for updating properties.
+    """
+
     def has_keys(keys, data):
         return all(key in data for key in keys)
 

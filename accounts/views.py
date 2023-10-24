@@ -12,6 +12,11 @@ from django.contrib.auth.backends import ModelBackend
 
 
 class CustomBackend(ModelBackend):
+    """
+    Custom Backend Authentication for validating users based on email rather
+    than conventional django auth (username)
+    """
+
     def authenticate(self, request, username=None, password=None, **kwargs):
         try:
             user = CustomUser.objects.get(
@@ -29,6 +34,7 @@ class CustomBackend(ModelBackend):
             return None
 
 
+# Creating a new user
 def register(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -41,6 +47,7 @@ def register(request):
     return render(request, "accounts/register.html", {"form": form})
 
 
+# Login view for registered users
 def login_view(request):
     if request.method == "POST":
         form = LoginForm(request.POST)
